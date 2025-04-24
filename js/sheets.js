@@ -1,7 +1,20 @@
 // Google Sheets Integration
 document.addEventListener('DOMContentLoaded', function() {
-    // Replace with your published Google Sheets URL (File > Share > Publish to web)
-    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTLYmSgwL6-9atwKMuYHPqI_fjYUyLFI87QWJiKh540ZQr1Uei79Yz_D3Cx39DRZypwMHn_KA2Seokj/pubhtml:json';
+   const SHEET_ID = '1TLYmSgwL6-9atwKMuYHPqI_fjYUyLFI87QWJiKh540ZZQr1Uei79Yz_D3Cx39DRZypwMHn_KA2Seokj';
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+
+fetch(SHEET_URL)
+  .then(res => res.text())
+  .then(text => {
+    // Remove Google's wrapper text
+    const json = JSON.parse(text.substring(47).slice(0, -2));
+    console.log("Data loaded:", json);
+    renderAllData(json);
+  })
+  .catch(err => {
+    console.error("Error loading Sheets:", err);
+    loadSampleData(); // Fallback to hardcoded data
+  });
     
     // Fetch data from Google Sheets
     fetch(SHEET_URL)
