@@ -1,127 +1,98 @@
-// Google Sheets Integration
+// Google Sheets Integration - No API Key Version
 document.addEventListener('DOMContentLoaded', function() {
-    // Replace with your actual Sheet ID
+    // Your Sheet ID (from the URL)
     const SHEET_ID = '1TLYmSgwL6-9atwKMuYHPqI_fjYUyLFI87QWJiKh540ZZQr1Uei79Yz_D3Cx39DRZypwMHn_KA2Seokj';
-    const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
-
-    // For development only - remove in production
-    const PROXY_URL = 'https://cors-anywhere.herokuapp.com/';
     
-    fetch(PROXY_URL + SHEET_URL)
-        .then(res => res.text())
+    // Correct JSON endpoint (no API key needed)
+    const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+    
+    // Temporary CORS proxy (remove in production)
+    const PROXY_URL = 'https://corsproxy.io/?';
+    
+    // Only one fetch call needed
+    fetch(PROXY_URL + encodeURIComponent(SHEET_URL))
+        .then(res => {
+            if (!res.ok) throw new Error('Network response was not ok');
+            return res.text();
+        })
         .then(text => {
+            // First check if we got HTML instead of JSON
+            if (text.startsWith('<!DOCTYPE html>')) {
+                throw new Error('Got HTML instead of JSON. Check sharing settings.');
+            }
+            
             try {
                 // Clean Google's JSON response
                 const json = JSON.parse(text.substring(47).slice(0, -2));
-                console.log("Success! Data loaded:", json);
+                console.log("Data loaded successfully!");
                 
                 // Process the data
                 const data = processSheetData(json);
                 renderAllData(data);
             } catch (e) {
-                console.error("Error parsing JSON:", e);
-                loadSampleData();
+                console.error("Error parsing data:", e);
+                loadSampleData(); // Fallback to sample data
             }
         })
         .catch(err => {
-            console.error('Network error loading data:', err);
-            loadSampleData();
+            console.error('Error loading data:', err);
+            loadSampleData(); // Fallback to sample data
         });
 });
 
 function processSheetData(json) {
     const data = {};
     
-    // Assuming first row contains column headers
-    const headers = json.table.rows[0].c.map(cell => cell?.v);
-    
-    // Process each row (skipping header row)
-    for (let i = 1; i < json.table.rows.length; i++) {
-        const row = json.table.rows[i];
-        const sheetName = row.c[0]?.v; // First column determines sheet name
-        
-        if (!sheetName) continue;
-        
-        if (!data[sheetName]) {
-            data[sheetName] = [];
-        }
-        
-        const rowData = {};
-        headers.forEach((header, j) => {
-            if (header && j > 0) { // Skip first column (sheet name)
-                rowData[header] = row.c[j]?.v;
+    // Process each sheet in the response
+    if (json.table && json.table.rows) {
+        json.table.rows.forEach(row => {
+            if (row.c && row.c[0] && row.c[0].v) {
+                const sheetName = row.c[0].v;
+                const rowData = {};
+                
+                // Process columns
+                json.table.cols.forEach((col, index) => {
+                    if (col.label && index > 0) { // Skip first column
+                        rowData[col.label] = row.c[index]?.v;
+                    }
+                });
+                
+                if (!data[sheetName]) data[sheetName] = [];
+                data[sheetName].push(rowData);
             }
         });
-        
-        data[sheetName].push(rowData);
     }
     
     return data;
 }
 
 function loadSampleData() {
-    console.warn("⚠️ Loading sample data instead of live data");
+    console.warn("⚠️ Loading sample data instead");
     
     const sampleData = {
-        heroSlides: [
-            {
-                bgFrom: "primary",
-                bgTo: "secondary",
-                badge: "דוגמא",
-                title: "האתר פועל אך ללא חיבור לנתונים",
-                subtitle: "המידע האמיתי יטען כשהחיבור יצליח",
-                buttonText: "לחץ כאן",
-                link: "#",
-                image: "https://via.placeholder.com/500x300"
-            }
-        ],
-        categories: [
-            {
-                name: "גאדג'טים",
-                icon: "fas fa-mobile-alt",
-                color: "primary",
-                count: "0 מוצרים",
-                link: "#"
-            },
-            {
-                name: "אופנה",
-                icon: "fas fa-tshirt",
-                color: "secondary",
-                count: "0 מוצרים",
-                link: "#"
-            }
-        ],
-        flashDeals: [
-            {
-                name: "שעון חכם דוגמא",
-                price: "99.90",
-                originalPrice: "299.90",
-                discount: 67,
-                rating: 4.5,
-                reviews: 1200,
-                orders: 500,
-                image: "https://via.placeholder.com/300x300",
-                link: "#",
-                isTrending: false
-            }
-        ],
-        dealOfTheDay: [
-            {
-                name: "מוצר השבוע דוגמא",
-                price: "199.90",
-                originalPrice: "499.90",
-                discount: 60,
-                rating: 4.8,
-                reviews: 2500,
-                image: "https://via.placeholder.com/300x300",
-                link: "#",
-                features: ["ניקוי אוטומטי", "מיפוי חכם", "עבודה עם אפליקציה"]
-            }
-        ]
+        heroSlides: [{
+            bgFrom: "primary",
+            bgTo: "secondary",
+            badge: "דוגמא",
+            title: "האתר פועל אך ללא חיבור לנתונים",
+            subtitle: "המידע האמיתי יטען כשהחיבור יצליח",
+            buttonText: "לחץ כאן",
+            link: "#",
+            image: "https://via.placeholder.com/500x300"
+        }],
+        categories: [{
+            name: "גאדג'טים",
+            icon: "fas fa-mobile-alt",
+            color: "primary",
+            count: "0 מוצרים",
+            link: "#"
+        }]
     };
     
     renderAllData(sampleData);
 }
+
+// ... (keep all your existing render functions exactly as they were)
 
 function renderAllData(data) {
     if (data.heroSlides) renderHeroSlides(data.heroSlides);
