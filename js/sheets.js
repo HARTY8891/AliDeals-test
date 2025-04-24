@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
     
     // CORS proxy (remove in production)
-    const PROXY_URL = 'https://api.allorigins.win/raw?url=';
+    const PROXY_URL = '';
     
     // Fetch data for all tabs
     Promise.all(
