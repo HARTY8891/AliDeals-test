@@ -107,7 +107,9 @@ function initSlider(slideCount) {
             showSlide(currentIndex);
         });
     });
-
+console.log('Slider element:', document.getElementById('heroSlider'));
+console.log('First slide element:', document.querySelector('.hero-slide'));
+console.log('Computed styles:', window.getComputedStyle(document.querySelector('.hero-slide')));
     // Auto-advance
     if (slideCount > 1) {
         setInterval(() => {
