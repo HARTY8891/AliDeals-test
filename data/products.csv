@@ -1,6 +1,6 @@
 section,bgFrom,bgTo,badge,title,subtitle,buttonText,link,image,name,price,originalPrice,discount,rating,reviews,orders,isTrending,icon,color,count
-hero,from-primary,to-secondary,הצעת השבוע!,מציאות מדהימות על גאדג'טים,עד 70% הנחה על המוצרים החמים ביותר,גלה עכשיו,#,https://via.placeholder.com/500x300,,,,,,,,,,,
-hero,from-accent,to-blue-400,הזדמנות חד פעמית!,אופנה במחירים מטורפים,הנחות ענק על מותגים מובילים,קנה עכשיו,#,https://via.placeholder.com/500x300,,,,,,,,,,,
+hero,from-primary,to-secondary,הצעת השבוע!,מציאות מדהימות על גאדג'טים,עד 70% הנחה על המוצרים החמים ביותר,גלה עכשיו,#,https://placehold.co/500x300,,,,,,,,,,,
+hero,from-accent,to-blue-400,הזדמנות חד פעמית!,אופנה במחירים מטורפים,הנחות ענק על מותגים מובילים,קנה עכשיו,#,https://placehold.co/500x300,,,,,,,,,,,
 categories,,,,,,,,,גאדג'טים,,,30,,,100,,fas fa-mobile-alt,text-blue-500,120
 categories,,,,,,,,,אופנה,,,45,,,75,,fas fa-tshirt,text-pink-500,85
 flashDeals,,,,,,,,,שעון חכם,59.99,99.99,40,4.5,128,342,TRUE,,,
