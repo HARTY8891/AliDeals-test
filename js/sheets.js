@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', async function() {
     try {
         // 1. Load and parse the CSV data
-        const response = await fetch('./data/products.csv');
+        const response = await fetch('./data/products.csv?v=' + Date.now());
         if (!response.ok) throw new Error('Failed to load CSV file');
         
         const csvData = await response.text();
