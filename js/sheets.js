@@ -107,44 +107,33 @@ function renderHeroSlides(slides) {
     initSlider(slides.length);
 }
 
-function initSlider(totalSlides) {
+// Remove any references to csvData in initSlider()
+function initSlider() {
     const heroSlides = document.querySelectorAll('.hero-slide');
     const slideDots = document.querySelectorAll('.slide-dot');
     let currentSlide = 0;
 
     function showSlide(index) {
-        // Validate index range
-        index = Math.max(0, Math.min(index, totalSlides - 1));
-        
         heroSlides.forEach((slide, i) => {
-            const isActive = i === index;
-            slide.classList.toggle('active', isActive);
-            slide.classList.toggle('inactive', !isActive);
-            
+            slide.classList.toggle('active', i === index);
+            slide.classList.toggle('inactive', i !== index);
             if (slideDots[i]) {
-                slideDots[i].classList.toggle('opacity-100', isActive);
-                slideDots[i].classList.toggle('opacity-50', !isActive);
+                slideDots[i].classList.toggle('opacity-100', i === index);
+                slideDots[i].classList.toggle('opacity-50', i !== index);
             }
         });
-        
-        currentSlide = index;
     }
 
-    // Add click handlers for dots
     slideDots.forEach(dot => {
         dot.addEventListener('click', () => {
-            const slideIndex = parseInt(dot.getAttribute('data-slide'));
-            if (!isNaN(slideIndex)) {
-                showSlide(slideIndex);
-            }
+            currentSlide = parseInt(dot.getAttribute('data-slide'));
+            showSlide(currentSlide);
         });
     });
 
-    // Auto-advance slides
-    const slideInterval = setInterval(() => {
-        showSlide((currentSlide + 1) % totalSlides);
+    // Auto-advance based on existing slides
+    setInterval(() => {
+        currentSlide = (currentSlide + 1) % heroSlides.length;
+        showSlide(currentSlide);
     }, 5000);
-
-    // Cleanup on unmount
-    return () => clearInterval(slideInterval);
 }
