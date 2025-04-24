@@ -6,7 +6,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (!response.ok) throw new Error('Failed to load CSV file');
         
         const csvData = await response.text();
+        console.log('Raw CSV content:', csvData); 
         const heroSlides = parseCSV(csvData);
+        console.log('Parsed hero slides:', heroSlides);
         
         // 2. Render the slides
         renderHeroSlides(heroSlides);
@@ -28,8 +30,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 function parseCSV(csv) {
+    console.log('Original CSV:', csv);
     const lines = csv.split('\n');
+    console.log('CSV lines:', lines); 
     const headers = lines[0].split(',');
+    console.log('Headers:', headers);
     const slides = [];
     
     for (let i = 1; i < lines.length; i++) {
@@ -50,6 +55,7 @@ function parseCSV(csv) {
 
 function renderHeroSlides(slides) {
     const slider = document.getElementById('heroSlider');
+    console.log('Slider DOM element:', slider); 
     if (!slider) return;
     
     slider.innerHTML = slides.map((slide, index) => `
@@ -111,6 +117,5 @@ function initSlider() {
         currentIndex = (currentIndex + 1) % slides.length;
         showSlide(currentIndex);
     }, 5000);
-    console.log("Raw CSV data:", csvData);
-    console.log("Parsed slides:", heroSlides);
+
 }
