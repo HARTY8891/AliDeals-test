@@ -1,27 +1,22 @@
-// sheets.js - Complete Working Solution
-
+// sheets.js - Final Corrected Version
 document.addEventListener('DOMContentLoaded', async function() {
     try {
         // 1. Load the CSV file
-        console.log('Loading CSV data...');
-        const response = await fetch('./data/products.csv?v=' + Date.now());
+        const response = await fetch('./data/products.csv');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        const csvData = await response.text();
+        console.log('CSV loaded successfully');
         
-        const csvText = await response.text();
-        console.log('CSV loaded successfully:', csvText);
+        // 2. Parse CSV data
+        const heroSlides = parseCSV(csvData);
+        console.log('Parsed slides:', heroSlides);
         
-        // 2. Parse the CSV data
-        const heroSlides = parseCSV(csvText);
-        console.log('Parsed slides data:', heroSlides);
-        
-        // 3. Render the slides
+        // 3. Render slides
         renderHeroSlides(heroSlides);
         
     } catch (error) {
-        console.error('Error loading or parsing data:', error);
+        console.error('Error loading data:', error);
         // Fallback to sample data
         renderHeroSlides([{
             bgFrom: "primary",
@@ -31,20 +26,16 @@ document.addEventListener('DOMContentLoaded', async function() {
             subtitle: "המידע יופיע כשהחיבור יצליח",
             buttonText: "לחץ כאן",
             link: "#",
-            image: "https://via.placeholder.com/500x300"
+            image: "https://placehold.co/500x300"
         }]);
     }
 });
 
-function parseCSV(csvText) {
-    const lines = csvText.split('\n').filter(line => line.trim() !== '');
+function parseCSV(csv) {
+    const lines = csv.split('\n').filter(line => line.trim() !== '');
+    if (lines.length < 2) return [];
     
-    if (lines.length < 2) {
-        console.warn('CSV file is empty or has no data rows');
-        return [];
-    }
-    
-    const headers = lines[0].split(',').map(header => header.trim());
+    const headers = lines[0].split(',').map(h => h.trim());
     const slides = [];
     
     for (let i = 1; i < lines.length; i++) {
@@ -63,21 +54,24 @@ function parseCSV(csvText) {
 
 function renderHeroSlides(slides) {
     const slider = document.getElementById('heroSlider');
-    
     if (!slider) {
-        console.error('Error: #heroSlider element not found in DOM');
+        console.error('Hero slider element not found');
         return;
     }
     
     if (!slides || slides.length === 0) {
-        console.warn('No slides data to render');
-        slider.innerHTML = '<div class="text-center py-10">No slides available</div>';
+        console.warn('No slides to render');
         return;
     }
     
-    // Render slides HTML
-    slider.innerHTML = slides.map((slide, index) => `
-        <div class="hero-slide ${index === 0 ? 'active' : 'inactive'} absolute inset-0 bg-gradient-to-r from-${slide.bgFrom} to-${slide.bgTo} flex items-center">
+    // Clear previous content
+    slider.innerHTML = '';
+    
+    // Create slides HTML
+    slides.forEach((slide, index) => {
+        const slideEl = document.createElement('div');
+        slideEl.className = `hero-slide ${index === 0 ? 'active' : 'inactive'} absolute inset-0 bg-gradient-to-r from-${slide.bgFrom} to-${slide.bgTo} flex items-center`;
+        slideEl.innerHTML = `
             <div class="container mx-auto px-4 flex flex-col md:flex-row items-center">
                 <div class="md:w-1/2 text-white text-right md:pr-10 mb-8 md:mb-0">
                     <span class="bg-white text-${slide.bgFrom} px-3 py-1 rounded-full text-sm font-bold mb-3 inline-block">${slide.badge}</span>
@@ -88,26 +82,25 @@ function renderHeroSlides(slides) {
                     </a>
                 </div>
                 <div class="md:w-1/2 flex justify-center">
-                    <img src="${slide.image}" alt="${slide.title}" class="rounded-lg shadow-xl max-h-64" onerror="this.src='https://via.placeholder.com/500x300'">
+                    <img src="${slide.image}" alt="${slide.title}" class="rounded-lg shadow-xl max-h-64" onerror="this.src='https://placehold.co/500x300'">
                 </div>
             </div>
-        </div>
-    `).join('');
+        `;
+        slider.appendChild(slideEl);
+    });
     
     // Add navigation dots
-    slider.innerHTML += `
-        <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-20">
-            ${slides.map((_, i) => `
-                <button class="slide-dot w-3 h-3 rounded-full bg-white ${i === 0 ? 'opacity-100' : 'opacity-50'}" data-slide="${i}"></button>
-            `).join('')}
-        </div>
-    `;
+    const dotsContainer = document.createElement('div');
+    dotsContainer.className = 'absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-20';
+    dotsContainer.innerHTML = slides.map((_, i) => `
+        <button class="slide-dot w-3 h-3 rounded-full bg-white ${i === 0 ? 'opacity-100' : 'opacity-50'}" data-slide="${i}"></button>
+    `).join('');
+    slider.appendChild(dotsContainer);
     
     // Initialize slider functionality
-    initSlider(slides.length);
+    initSlider();
 }
 
-// Remove any references to csvData in initSlider()
 function initSlider() {
     const heroSlides = document.querySelectorAll('.hero-slide');
     const slideDots = document.querySelectorAll('.slide-dot');
@@ -115,15 +108,18 @@ function initSlider() {
 
     function showSlide(index) {
         heroSlides.forEach((slide, i) => {
-            slide.classList.toggle('active', i === index);
-            slide.classList.toggle('inactive', i !== index);
+            const isActive = i === index;
+            slide.classList.toggle('active', isActive);
+            slide.classList.toggle('inactive', !isActive);
+            
             if (slideDots[i]) {
-                slideDots[i].classList.toggle('opacity-100', i === index);
-                slideDots[i].classList.toggle('opacity-50', i !== index);
+                slideDots[i].classList.toggle('opacity-100', isActive);
+                slideDots[i].classList.toggle('opacity-50', !isActive);
             }
         });
     }
 
+    // Add click handlers for dots
     slideDots.forEach(dot => {
         dot.addEventListener('click', () => {
             currentSlide = parseInt(dot.getAttribute('data-slide'));
@@ -131,9 +127,12 @@ function initSlider() {
         });
     });
 
-    // Auto-advance based on existing slides
-    setInterval(() => {
+    // Auto-advance slides
+    const slideInterval = setInterval(() => {
         currentSlide = (currentSlide + 1) % heroSlides.length;
         showSlide(currentSlide);
     }, 5000);
+
+    // Cleanup on unmount
+    return () => clearInterval(slideInterval);
 }
