@@ -1,7 +1,7 @@
 // Google Sheets Integration - No API Key Version
 document.addEventListener('DOMContentLoaded', function() {
     // Your Sheet ID (from the URL)
-    const SHEET_ID = '1TLYmSgwL6-9atwKMuYHPqI_fjYUyLFI87QWJiKh540ZZQr1Uei79Yz_D3Cx39DRZypwMHn_KA2Seokj';
+    const SHEET_ID = '1AvI_L7t_qAGCFi8iCkZTjNPgwOQU-b85kkHPIJDNKlE';
     
     // Correct JSON endpoint (no API key needed)
     const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
