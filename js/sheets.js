@@ -1,17 +1,27 @@
+// sheets.js - Complete Working Solution
+
 document.addEventListener('DOMContentLoaded', async function() {
     try {
         // 1. Load the CSV file
-        const response = await fetch('./data/products.csv');
-        if (!response.ok) throw new Error('Failed to load CSV file');
+        console.log('Loading CSV data...');
+        const response = await fetch('./data/products.csv?v=' + Date.now());
         
-        const csvData = await response.text();
-        const heroSlides = parseCSV(csvData);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         
-        // 2. Render the slides
+        const csvText = await response.text();
+        console.log('CSV loaded successfully:', csvText);
+        
+        // 2. Parse the CSV data
+        const heroSlides = parseCSV(csvText);
+        console.log('Parsed slides data:', heroSlides);
+        
+        // 3. Render the slides
         renderHeroSlides(heroSlides);
         
     } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error loading or parsing data:', error);
         // Fallback to sample data
         renderHeroSlides([{
             bgFrom: "primary",
@@ -26,19 +36,23 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
-function parseCSV(csv) {
-    const lines = csv.split('\n');
-    const headers = lines[0].split(',');
+function parseCSV(csvText) {
+    const lines = csvText.split('\n').filter(line => line.trim() !== '');
+    
+    if (lines.length < 2) {
+        console.warn('CSV file is empty or has no data rows');
+        return [];
+    }
+    
+    const headers = lines[0].split(',').map(header => header.trim());
     const slides = [];
     
     for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue;
-        
         const values = lines[i].split(',');
         const slide = {};
         
         headers.forEach((header, index) => {
-            slide[header.trim()] = values[index] ? values[index].trim() : '';
+            slide[header] = values[index] ? values[index].trim() : '';
         });
         
         slides.push(slide);
@@ -49,8 +63,19 @@ function parseCSV(csv) {
 
 function renderHeroSlides(slides) {
     const slider = document.getElementById('heroSlider');
-    if (!slider || !slides.length) return;
     
+    if (!slider) {
+        console.error('Error: #heroSlider element not found in DOM');
+        return;
+    }
+    
+    if (!slides || slides.length === 0) {
+        console.warn('No slides data to render');
+        slider.innerHTML = '<div class="text-center py-10">No slides available</div>';
+        return;
+    }
+    
+    // Render slides HTML
     slider.innerHTML = slides.map((slide, index) => `
         <div class="hero-slide ${index === 0 ? 'active' : 'inactive'} absolute inset-0 bg-gradient-to-r from-${slide.bgFrom} to-${slide.bgTo} flex items-center">
             <div class="container mx-auto px-4 flex flex-col md:flex-row items-center">
@@ -63,7 +88,7 @@ function renderHeroSlides(slides) {
                     </a>
                 </div>
                 <div class="md:w-1/2 flex justify-center">
-                    <img src="${slide.image}" alt="${slide.title}" class="rounded-lg shadow-xl max-h-64">
+                    <img src="${slide.image}" alt="${slide.title}" class="rounded-lg shadow-xl max-h-64" onerror="this.src='https://via.placeholder.com/500x300'">
                 </div>
             </div>
         </div>
@@ -78,15 +103,19 @@ function renderHeroSlides(slides) {
         </div>
     `;
     
-    initSlider(slides); // Pass slides to initSlider
+    // Initialize slider functionality
+    initSlider(slides.length);
 }
 
-function initSlider(slides) { // Now accepts slides parameter
+function initSlider(totalSlides) {
     const heroSlides = document.querySelectorAll('.hero-slide');
     const slideDots = document.querySelectorAll('.slide-dot');
     let currentSlide = 0;
 
     function showSlide(index) {
+        // Validate index range
+        index = Math.max(0, Math.min(index, totalSlides - 1));
+        
         heroSlides.forEach((slide, i) => {
             const isActive = i === index;
             slide.classList.toggle('active', isActive);
@@ -97,18 +126,25 @@ function initSlider(slides) { // Now accepts slides parameter
                 slideDots[i].classList.toggle('opacity-50', !isActive);
             }
         });
+        
+        currentSlide = index;
     }
 
+    // Add click handlers for dots
     slideDots.forEach(dot => {
         dot.addEventListener('click', () => {
-            currentSlide = parseInt(dot.getAttribute('data-slide'));
-            showSlide(currentSlide);
+            const slideIndex = parseInt(dot.getAttribute('data-slide'));
+            if (!isNaN(slideIndex)) {
+                showSlide(slideIndex);
+            }
         });
     });
 
     // Auto-advance slides
-    setInterval(() => {
-        currentSlide = (currentSlide + 1) % slides.length;
-        showSlide(currentSlide);
+    const slideInterval = setInterval(() => {
+        showSlide((currentSlide + 1) % totalSlides);
     }, 5000);
+
+    // Cleanup on unmount
+    return () => clearInterval(slideInterval);
 }
