@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rubik+Hebrew:wght@300;400;500;600;700&display=swap');
+
+body {
+    font-family: 'Rubik Hebrew', sans-serif;
+}
+
+.en {
+    font-family: 'Rubik', sans-serif;
+    direction: ltr;
+}
+
+.deal-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: linear-gradient(135deg, #FF4747 0%, #FF6B00 100%);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.product-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.language-switch {
+    transition: all 0.3s ease;
+}
+
+.language-switch:hover {
+    transform: scale(1.1);
+}
+
+.countdown {
+    font-family: 'Rubik', monospace;
+}
+
+.hero-slide {
+    transition: opacity 1s ease-in-out;
+}
+
+.hero-slide.active {
+    opacity: 1;
+    z-index: 10;
+}
+
+.hero-slide.inactive {
+    opacity: 0;
+    z-index: 1;
+}
+
+/* Animation for the trending badge */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.trending-badge {
+    animation: pulse 2s infinite;
+}
+
+/* Tailwind config */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --color-primary: #FF4747;
+        --color-secondary: #FF6B00;
+        --color-accent: #00A0E9;
+        --color-dark: #1A1A1A;
+        --color-light: #F8F9FA;
+    }
+}
+
+@layer components {
+    .btn-primary {
+        @apply bg-primary text-white px-6 py-3 rounded-full font-bold hover:bg-red-600 transition;
+    }
+}
