@@ -111,4 +111,6 @@ function initSlider() {
         currentIndex = (currentIndex + 1) % slides.length;
         showSlide(currentIndex);
     }, 5000);
+    console.log("Raw CSV data:", csvData);
+    console.log("Parsed slides:", heroSlides);
 }
