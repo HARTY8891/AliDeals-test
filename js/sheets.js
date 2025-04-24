@@ -1,80 +1,80 @@
-// Google Sheets Integration - Complete Solution
 document.addEventListener('DOMContentLoaded', function() {
+    // Your Sheet ID
     const SHEET_ID = '1AvI_L7t_qAGCFi8iCkZTjNPgwOQU-b85kkHPIJDNKlE';
-    const API_KEY = ''; // Not needed for public sheets
-    const SHEET_NAMES = ['heroSlides', 'categories', 'flashDeals', 'trendingProducts', 'dealOfTheDay', 'blogPosts'];
     
-    // Load data for all sheets
+    // List of all sheet tabs you're using
+    const SHEET_TABS = [
+        'heroSlides', 
+        'categories', 
+        'flashDeals', 
+        'trendingProducts',
+        'dealOfTheDay',
+        'blogPosts'
+    ];
+    
+    // CORS proxy (remove in production)
+    const PROXY_URL = 'https://api.allorigins.win/raw?url=';
+    
+    // Fetch data for all tabs
     Promise.all(
-        SHEET_NAMES.map(sheet => 
-            fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${sheet}`)
-                .then(res => res.text())
+        SHEET_TABS.map(tab => {
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tab)}`;
+            return fetch(PROXY_URL + encodeURIComponent(url))
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.text();
+                })
                 .then(text => {
+                    if (text.startsWith('<')) throw new Error('Received HTML instead of JSON');
+                    
                     try {
                         const json = JSON.parse(text.substring(47).slice(0, -2));
-                        return { sheet, data: json.table.rows.map(row => {
-                            const obj = {};
-                            json.table.cols.forEach((col, i) => {
-                                if (col.label) obj[col.label] = row.c[i]?.v;
-                            });
-                            return obj;
-                        })};
+                        return {
+                            tabName: tab,
+                            data: json.table.rows.map(row => {
+                                const item = {};
+                                json.table.cols.forEach((col, index) => {
+                                    if (col.label) {
+                                        item[col.label] = row.c[index]?.v;
+                                    }
+                                });
+                                return item;
+                            })
+                        };
                     } catch (e) {
-                        console.error(`Error parsing ${sheet}:`, e);
-                        return { sheet, data: [] };
+                        console.error(`Error parsing ${tab}:`, e);
+                        return { tabName: tab, data: [] };
                     }
                 })
-        )
+                .catch(error => {
+                    console.error(`Error loading ${tab}:`, error);
+                    return { tabName: tab, data: [] };
+                });
+        })
     )
     .then(results => {
         const allData = {};
-        results.forEach(({sheet, data}) => {
-            allData[sheet] = data;
+        results.forEach(({tabName, data}) => {
+            allData[tabName] = data;
         });
         renderAllData(allData);
     })
-    .catch(err => {
-        console.error('Error loading sheets:', err);
+    .catch(error => {
+        console.error('Failed to load data:', error);
         loadSampleData();
     });
 });
 
-function processSheetData(json) {
-    const data = {};
-    
-    // Process each sheet in the response
-    if (json.table && json.table.rows) {
-        json.table.rows.forEach(row => {
-            if (row.c && row.c[0] && row.c[0].v) {
-                const sheetName = row.c[0].v;
-                const rowData = {};
-                
-                // Process columns
-                json.table.cols.forEach((col, index) => {
-                    if (col.label && index > 0) { // Skip first column
-                        rowData[col.label] = row.c[index]?.v;
-                    }
-                });
-                
-                if (!data[sheetName]) data[sheetName] = [];
-                data[sheetName].push(rowData);
-            }
-        });
-    }
-    
-    return data;
-}
-
+// Sample data fallback
 function loadSampleData() {
-    console.warn("⚠️ Loading sample data instead");
-    
+    console.warn("Loading sample data...");
     const sampleData = {
         heroSlides: [{
             bgFrom: "primary",
             bgTo: "secondary",
             badge: "דוגמא",
-            title: "האתר פועל אך ללא חיבור לנתונים",
-            subtitle: "המידע האמיתי יטען כשהחיבור יצליח",
+            title: "אתר במצב בדיקה",
+            subtitle: "הנתונים ייטענו כשהחיבור יצליח",
             buttonText: "לחץ כאן",
             link: "#",
             image: "https://via.placeholder.com/500x300"
@@ -85,53 +85,8 @@ function loadSampleData() {
             color: "primary",
             count: "0 מוצרים",
             link: "#"
-        }],
-        flashDeals: [{
-            name: "שעון חכם דוגמא",
-            price: "99.90",
-            originalPrice: "299.90",
-            discount: 67,
-            rating: 4.5,
-            reviews: 1200,
-            orders: 500,
-            image: "https://via.placeholder.com/300x300",
-            link: "#",
-            isTrending: false
-        }],
-        trendingProducts: [{
-            name: "אוזניות אלחוטיות דוגמא",
-            price: "129.90",
-            originalPrice: "399.90",
-            discount: 68,
-            rating: 4.7,
-            reviews: 850,
-            orders: 300,
-            image: "https://via.placeholder.com/300x300",
-            link: "#",
-            isTrending: true
-        }],
-        dealOfTheDay: [{
-            name: "מוצר השבוע דוגמא",
-            price: "199.90",
-            originalPrice: "499.90",
-            discount: 60,
-            rating: 4.8,
-            reviews: 2500,
-            image: "https://via.placeholder.com/300x300",
-            link: "#",
-            features: ["ניקוי אוטומטי", "מיפוי חכם", "עבודה עם אפליקציה"]
-        }],
-        blogPosts: [{
-            title: "טיפים לקנייה מאליאקספרס",
-            category: "טיפים",
-            categoryColor: "secondary",
-            excerpt: "כיצד לחסוך כסף בקניות באינטרנט",
-            date: "3 ימים לפני",
-            image: "https://via.placeholder.com/600x400",
-            link: "#"
         }]
     };
-    
     renderAllData(sampleData);
 }
 
