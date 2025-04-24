@@ -1,42 +1,42 @@
 // Google Sheets Integration - Complete Solution
 document.addEventListener('DOMContentLoaded', function() {
-    // Your Sheet ID (from the URL)
     const SHEET_ID = '1AvI_L7t_qAGCFi8iCkZTjNPgwOQU-b85kkHPIJDNKlE';
+    const API_KEY = ''; // Not needed for public sheets
+    const SHEET_NAMES = ['heroSlides', 'categories', 'flashDeals', 'trendingProducts', 'dealOfTheDay', 'blogPosts'];
     
-    // Correct JSON endpoint
-    const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
-    
-    // CORS proxy (temporary for development)
-    const PROXY_URL = 'https://api.allorigins.win/raw?url=';
-    
-    fetch(PROXY_URL + encodeURIComponent(SHEET_URL))
-        .then(res => {
-            if (!res.ok) throw new Error('Network response was not ok');
-            return res.text();
-        })
-        .then(text => {
-            // Check if we got HTML instead of JSON
-            if (text.startsWith('<!DOCTYPE html>')) {
-                throw new Error('Got HTML instead of JSON. Check sharing settings.');
-            }
-            
-            try {
-                // Clean Google's JSON response
-                const json = JSON.parse(text.substring(47).slice(0, -2));
-                console.log("Data loaded successfully:", json);
-                
-                // Process the data
-                const data = processSheetData(json);
-                renderAllData(data);
-            } catch (e) {
-                console.error("Error parsing data:", e);
-                loadSampleData();
-            }
-        })
-        .catch(err => {
-            console.error('Error loading data:', err);
-            loadSampleData();
+    // Load data for all sheets
+    Promise.all(
+        SHEET_NAMES.map(sheet => 
+            fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${sheet}`)
+                .then(res => res.text())
+                .then(text => {
+                    try {
+                        const json = JSON.parse(text.substring(47).slice(0, -2));
+                        return { sheet, data: json.table.rows.map(row => {
+                            const obj = {};
+                            json.table.cols.forEach((col, i) => {
+                                if (col.label) obj[col.label] = row.c[i]?.v;
+                            });
+                            return obj;
+                        })};
+                    } catch (e) {
+                        console.error(`Error parsing ${sheet}:`, e);
+                        return { sheet, data: [] };
+                    }
+                })
+        )
+    )
+    .then(results => {
+        const allData = {};
+        results.forEach(({sheet, data}) => {
+            allData[sheet] = data;
         });
+        renderAllData(allData);
+    })
+    .catch(err => {
+        console.error('Error loading sheets:', err);
+        loadSampleData();
+    });
 });
 
 function processSheetData(json) {
