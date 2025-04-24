@@ -1,56 +1,89 @@
+// sheets.js - Complete Working Solution
+
 document.addEventListener('DOMContentLoaded', async function() {
     try {
-        // Load CSV
-        const response = await fetch('./data/products.csv');
-        if (!response.ok) throw new Error('CSV load failed');
-        const csvData = await response.text();
+        // 1. Load the CSV file
+        console.log('Loading CSV data...');
+        const response = await fetch('products.csv?v=' + Date.now());
         
-        // Parse and verify
-        const heroSlides = parseCSV(csvData);
-        console.log('Parsed slides:', heroSlides);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         
-        // Render
+        const csvText = await response.text();
+        console.log('CSV loaded successfully:', csvText);
+        
+        // 2. Parse the CSV data
+        const heroSlides = parseCSV(csvText);
+        console.log('Parsed slides data:', heroSlides);
+        
+        // 3. Render the slides
         renderHeroSlides(heroSlides);
         
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error loading or parsing data:', error);
+        // Fallback to sample data
         renderHeroSlides([{
-            bgFrom: "red-500",
-            bgTo: "red-700",
-            badge: "תקלה",
-            title: "בעיה בטעינת הנתונים",
-            subtitle: "אנא נסו שוב מאוחר יותר",
-            buttonText: "רענן עמוד",
+            bgFrom: "primary",
+            bgTo: "secondary",
+            badge: "הצעת השבוע!",
+            title: "מציאות מדהימות על גאדג'טים",
+            subtitle: "עד 70% הנחה על המוצרים החמים ביותר",
+            buttonText: "גלה עכשיו",
             link: "#",
             image: "https://via.placeholder.com/500x300"
         }]);
     }
 });
 
-function parseCSV(csv) {
-    return csv.split('\n')
-        .filter(line => line.trim() && !line.startsWith('#'))
-        .slice(1) // Skip header
-        .map(line => {
-            const [bgFrom, bgTo, badge, title, subtitle, buttonText, link, image] = line.split(',');
-            return { bgFrom, bgTo, badge, title, subtitle, buttonText, link, image };
+function parseCSV(csvText) {
+    const lines = csvText.split('\n').filter(line => line.trim() !== '');
+    
+    if (lines.length < 2) {
+        console.warn('CSV file is empty or has no data rows');
+        return [];
+    }
+    
+    const headers = lines[0].split(',').map(header => header.trim());
+    const slides = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',');
+        const slide = {};
+        
+        headers.forEach((header, index) => {
+            slide[header] = values[index] ? values[index].trim() : '';
         });
+        
+        slides.push(slide);
+    }
+    
+    return slides;
 }
 
 function renderHeroSlides(slides) {
     const slider = document.getElementById('heroSlider');
+    
     if (!slider) {
-        console.error('Error: #heroSlider element not found!');
+        console.error('Error: #heroSlider element not found in DOM');
         return;
     }
-
-    // Clear previous content
+    
+    if (!slides || slides.length === 0) {
+        console.warn('No slides data to render');
+        slider.innerHTML = '<div class="text-center py-10">No slides available</div>';
+        return;
+    }
+    
+    // Clear existing content
     slider.innerHTML = '';
     
-    // Add slides
+    // Render slides HTML
     slides.forEach((slide, index) => {
         const slideDiv = document.createElement('div');
         slideDiv.className = `hero-slide ${index === 0 ? 'active' : 'inactive'} absolute inset-0 bg-gradient-to-r from-${slide.bgFrom} to-${slide.bgTo} flex items-center`;
+        slideDiv.style.background = `linear-gradient(to right, var(--tw-gradient-from), var(--tw-gradient-to))`;
+        
         slideDiv.innerHTML = `
             <div class="container mx-auto px-4 flex flex-col md:flex-row items-center">
                 <div class="md:w-1/2 text-white text-right md:pr-10 mb-8 md:mb-0">
@@ -66,55 +99,65 @@ function renderHeroSlides(slides) {
                 </div>
             </div>
         `;
+        
         slider.appendChild(slideDiv);
     });
-
-    // Add dots if multiple slides
-    if (slides.length > 1) {
-        const dotsContainer = document.createElement('div');
-        dotsContainer.className = 'absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-20';
-        dotsContainer.innerHTML = slides.map((_, i) => `
-            <button class="slide-dot w-3 h-3 rounded-full bg-white ${i === 0 ? 'opacity-100' : 'opacity-50'}" data-slide="${i}"></button>
-        `).join('');
-        slider.appendChild(dotsContainer);
-    }
-
+    
+    // Add navigation dots
+    const dotsContainer = document.createElement('div');
+    dotsContainer.className = 'absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-20';
+    
+    slides.forEach((_, i) => {
+        const dot = document.createElement('button');
+        dot.className = `slide-dot w-3 h-3 rounded-full bg-white ${i === 0 ? 'opacity-100' : 'opacity-50'}`;
+        dot.setAttribute('data-slide', i);
+        dotsContainer.appendChild(dot);
+    });
+    
+    slider.appendChild(dotsContainer);
+    
+    // Initialize slider functionality
     initSlider(slides.length);
 }
 
-function initSlider(slideCount) {
-    const slides = document.querySelectorAll('.hero-slide');
-    const dots = document.querySelectorAll('.slide-dot');
-    let currentIndex = 0;
+function initSlider(totalSlides) {
+    const heroSlides = document.querySelectorAll('.hero-slide');
+    const slideDots = document.querySelectorAll('.slide-dot');
+    let currentSlide = 0;
 
     function showSlide(index) {
-        slides.forEach((slide, i) => {
+        // Validate index range
+        index = Math.max(0, Math.min(index, totalSlides - 1));
+        
+        heroSlides.forEach((slide, i) => {
             const isActive = i === index;
             slide.classList.toggle('active', isActive);
             slide.classList.toggle('inactive', !isActive);
+            
+            if (slideDots[i]) {
+                slideDots[i].classList.toggle('opacity-100', isActive);
+                slideDots[i].classList.toggle('opacity-50', !isActive);
+            }
         });
         
-        dots.forEach((dot, i) => {
-            dot?.classList.toggle('opacity-100', i === index);
-            dot?.classList.toggle('opacity-50', i !== index);
-        });
+        currentSlide = index;
     }
 
-    // Dot click handlers
-    document.querySelectorAll('.slide-dot').forEach(dot => {
+    // Add click handlers for dots
+    slideDots.forEach(dot => {
         dot.addEventListener('click', () => {
-            currentIndex = parseInt(dot.getAttribute('data-slide'));
-            showSlide(currentIndex);
+            const slideIndex = parseInt(dot.getAttribute('data-slide'));
+            if (!isNaN(slideIndex)) {
+                showSlide(slideIndex);
+            }
         });
     });
-console.log('Slider element:', document.getElementById('heroSlider'));
-console.log('First slide element:', document.querySelector('.hero-slide'));
-console.log('Computed styles:', window.getComputedStyle(document.querySelector('.hero-slide')));
-    // Auto-advance
-    if (slideCount > 1) {
-        setInterval(() => {
-            currentIndex = (currentIndex + 1) % slideCount;
-            showSlide(currentIndex);
-        }, 5000);
-    }
+
+    // Auto-advance slides
+    const slideInterval = setInterval(() => {
+        showSlide((currentSlide + 1) % totalSlides);
+    }, 5000);
+
+    // Cleanup on unmount
+    return () => clearInterval(slideInterval);
 }
